@@ -167,6 +167,113 @@ body {
     font-size: 0.9em;
 }
 
+/* Search Modal Styles */
+.search-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--secondary);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #333;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.search-container {
+    margin-bottom: 16px;
+    max-width: 300px; /* Added max-width to limit the search input width */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--bg-dark);
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: var(--text-light);
+    font-size: 0.9em;
+    height: 36px;
+}
+
+.search-result {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 15px;
+    padding: 15px;
+    border-bottom: 1px solid #333;
+}
+
+.result-poster {
+    width: 80px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.result-info h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.1em;
+}
+
+.result-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.result-description {
+    font-size: 0.9em;
+    color: #888;
+    margin-bottom: 12px;
+}
+
+.add-movie-btn {
+    background: var(--accent);
+    border: none;
+    color: var(--text-light);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
 @media (max-width: 768px) {
     .container {
         grid-template-columns: 1fr;
@@ -274,5 +381,142 @@ body {
 
     .main-content {
         padding: 0;
+    }
+
+    /* Modal mobile styles */
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .search-result {
+        grid-template-columns: 60px 1fr;
+    }
+    
+    .result-poster {
+        width: 60px;
+        height: 90px;
+    }
+    
+    .modal-header h2 {
+        font-size: 1.2em;
+    }
+    
+    .search-container {
+        max-width: 250px; /* Even smaller on mobile */
+    }
+    
+    .search-input {
+        padding: 6px 10px;
+        height: 32px;
+    }
+    
+    .result-info h3 {
+        font-size: 1em;
+    }
+    
+    .result-description {
+        font-size: 0.8em;
+    }
+    
+    .add-movie-btn {
+        padding: 6px 12px;
+        font-size: 0.9em;
+    }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Animations */
+.modal-content {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Focus states for accessibility */
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(255, 107, 43, 0.2);
+}
+
+.filter-btn:focus,
+.add-movie-btn:focus,
+.close-modal:focus,
+.rerank-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Hover states */
+.filter-btn:hover,
+.add-movie-btn:hover,
+.rerank-btn:hover {
+    background: #ff824d;
+}
+
+.close-modal:hover {
+    color: #ff824d;
+}
+
+.search-result:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.error-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    z-index: 2000;
+    animation: toastFadeIn 0.3s ease-out;
+}
+
+@keyframes toastFadeIn {
+    from {
+        transform: translate(-50%, 20px);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .error-toast {
+        width: 90%;
+        text-align: center;
     }
 }

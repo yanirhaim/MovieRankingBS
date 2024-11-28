@@ -33,6 +33,28 @@ const movies = [
     }
 ];
 
+const searchMovies = async (query) => {
+    // Simulating API call - replace with actual API integration
+    return [
+        {
+            title: "Example Movie 1",
+            year: 2023,
+            poster: "/api/placeholder/80/120",
+            tags: ["Drama", "Action"],
+            description: "Example movie description 1"
+        },
+        {
+            title: "Example Movie 2",
+            year: 2022,
+            poster: "/api/placeholder/80/120",
+            tags: ["Comedy", "Romance"],
+            description: "Example movie description 2"
+        }
+    ].filter(movie => 
+        movie.title.toLowerCase().includes(query.toLowerCase())
+    );
+};
+
 function renderMovies() {
     const movieList = document.getElementById('movie-list');
     movieList.innerHTML = movies.map(movie => `
@@ -62,6 +84,114 @@ function handleRerank(index) {
     console.log(`Reranking movie at index ${index}`);
 }
 
+function createSearchModal() {
+    const modal = document.createElement('div');
+    modal.className = 'search-modal';
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Movie to Ranking</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search for a movie...">
+                </div>
+                <div class="search-results"></div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    
+    const searchInput = modal.querySelector('.search-input');
+    const searchResults = modal.querySelector('.search-results');
+    const closeBtn = modal.querySelector('.close-modal');
+    
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(async () => {
+            const query = e.target.value.trim();
+            if (query.length < 2) {
+                searchResults.innerHTML = '';
+                return;
+            }
+            
+            const results = await searchMovies(query);
+            displaySearchResults(results, searchResults);
+        }, 300);
+    });
+    
+    closeBtn.addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    return modal;
+}
+
+function displaySearchResults(results, container) {
+    container.innerHTML = results.map(movie => `
+        <div class="search-result">
+            <img src="${movie.poster}" alt="${movie.title}" class="result-poster">
+            <div class="result-info">
+                <h3>${movie.title} (${movie.year})</h3>
+                <div class="result-tags">
+                    ${movie.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                </div>
+                <p class="result-description">${movie.description}</p>
+                <button class="add-movie-btn">Add to Ranking</button>
+            </div>
+        </div>
+    `).join('');
+    
+    container.querySelectorAll('.add-movie-btn').forEach((btn, index) => {
+        btn.addEventListener('click', () => {
+            addMovieToRanking(results[index]);
+            document.querySelector('.search-modal').remove();
+        });
+    });
+}
+
+function addMovieToRanking(movie) {
+    // Check if movie already exists in the list
+    const movieExists = movies.some(existingMovie => 
+        existingMovie.title.toLowerCase() === movie.title.toLowerCase() && 
+        existingMovie.year === movie.year
+    );
+
+    if (movieExists) {
+        // Create and show error message
+        const errorToast = document.createElement('div');
+        errorToast.className = 'error-toast';
+        errorToast.textContent = `"${movie.title}" is already in your ranking`;
+        document.body.appendChild(errorToast);
+
+        // Remove toast after 3 seconds
+        setTimeout(() => {
+            errorToast.remove();
+        }, 3000);
+
+        return;
+    }
+
+    // If movie doesn't exist, add it with the next rank
+    const newRank = movies.length + 1;
+    movies.push({
+        ...movie,
+        rank: newRank
+    });
+    renderMovies();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     renderMovies();
     
@@ -77,4 +207,14 @@ document.addEventListener('DOMContentLoaded', () => {
             button.classList.add('active');
         });
     });
+
+    // Add Movie button
+    const header = document.querySelector('.header');
+    const addButton = document.createElement('button');
+    addButton.className = 'filter-btn';
+    addButton.textContent = 'Add Movie';
+    addButton.addEventListener('click', () => {
+        createSearchModal();
+    });
+    header.appendChild(addButton);
 });
