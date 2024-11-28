@@ -520,3 +520,40 @@ body {
         text-align: center;
     }
 }
+
+.movie-comparison {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.movie-comparison .movie-poster {
+    width: 160px;
+    height: 240px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.movie-comparison h3 {
+    margin: 0;
+    font-size: 1.1em;
+}
+
+.movie-comparison .year {
+    color: #888;
+    font-size: 0.9em;
+    margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+    .movie-comparison .movie-poster {
+        width: 120px;
+        height: 180px;
+    }
+
+    .movie-comparison h3 {
+        font-size: 1em;
+    }
+}

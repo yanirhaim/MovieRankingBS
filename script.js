@@ -55,6 +55,7 @@ const searchMovies = async (query) => {
     );
 };
 
+// Rendering Functions
 function renderMovies() {
     const movieList = document.getElementById('movie-list');
     movieList.innerHTML = movies.map(movie => `
@@ -80,10 +81,96 @@ function renderMovies() {
     });
 }
 
-function handleRerank(index) {
-    console.log(`Reranking movie at index ${index}`);
+// Comparison Modal Functions
+function createComparisonModal(movieToRank, comparisonMovie, isReranking = false) {
+    const modal = document.createElement('div');
+    modal.className = 'search-modal';
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>${isReranking ? 'Rerank Movie' : 'Compare Movies'}</h2>
+            </div>
+            <div class="modal-body">
+                <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center;">
+                    <div class="movie-comparison">
+                        <img src="${movieToRank.poster}" alt="${movieToRank.title}" class="movie-poster">
+                        <h3>${movieToRank.title}</h3>
+                        <div class="year">(${movieToRank.year})</div>
+                    </div>
+                    <div style="text-align: center; font-size: 1.2em;">vs</div>
+                    <div class="movie-comparison" id="comparison-movie">
+                        <img src="${comparisonMovie.poster}" alt="${comparisonMovie.title}" class="movie-poster">
+                        <h3>${comparisonMovie.title}</h3>
+                        <div class="year">(${comparisonMovie.year})</div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <p>Which movie do you prefer?</p>
+                    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+                        <button class="add-movie-btn" id="prefer-left">Prefer Left</button>
+                        <button class="add-movie-btn" id="prefer-right">Prefer Right</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    return modal;
 }
 
+function findRankWithBinarySearch(movieToRank, excludeIndex = -1) {
+    return new Promise((resolve) => {
+        // Create a temporary array excluding the movie being reranked (if applicable)
+        const tempMovies = excludeIndex === -1 ? 
+            [...movies] : 
+            movies.filter((_, index) => index !== excludeIndex);
+
+        let left = 0;
+        let right = tempMovies.length - 1;
+        let currentIndex;
+
+        function showComparison() {
+            currentIndex = Math.floor((left + right) / 2);
+            const comparisonMovie = tempMovies[currentIndex];
+            const modal = createComparisonModal(
+                movieToRank, 
+                comparisonMovie, 
+                excludeIndex !== -1
+            );
+
+            // Handle user choice
+            modal.querySelector('#prefer-left').addEventListener('click', () => {
+                modal.remove();
+                right = currentIndex - 1;
+                if (left > right) {
+                    resolve(left);
+                } else {
+                    showComparison();
+                }
+            });
+
+            modal.querySelector('#prefer-right').addEventListener('click', () => {
+                modal.remove();
+                left = currentIndex + 1;
+                if (left > right) {
+                    resolve(left);
+                } else {
+                    showComparison();
+                }
+            });
+        }
+
+        if (tempMovies.length === 0) {
+            resolve(0);
+        } else {
+            showComparison();
+        }
+    });
+}
+
+// Search Modal Functions
 function createSearchModal() {
     const modal = document.createElement('div');
     modal.className = 'search-modal';
@@ -161,41 +248,65 @@ function displaySearchResults(results, container) {
     });
 }
 
-function addMovieToRanking(movie) {
-    // Check if movie already exists in the list
+// Ranking Functions
+async function addMovieToRanking(movie) {
+    // Check if movie already exists
     const movieExists = movies.some(existingMovie => 
         existingMovie.title.toLowerCase() === movie.title.toLowerCase() && 
         existingMovie.year === movie.year
     );
 
     if (movieExists) {
-        // Create and show error message
         const errorToast = document.createElement('div');
         errorToast.className = 'error-toast';
         errorToast.textContent = `"${movie.title}" is already in your ranking`;
         document.body.appendChild(errorToast);
-
-        // Remove toast after 3 seconds
-        setTimeout(() => {
-            errorToast.remove();
-        }, 3000);
-
+        setTimeout(() => errorToast.remove(), 3000);
         return;
     }
 
-    // If movie doesn't exist, add it with the next rank
-    const newRank = movies.length + 1;
-    movies.push({
+    // Find the appropriate rank using binary search
+    const newPosition = await findRankWithBinarySearch(movie);
+    
+    // Insert the movie at the determined position
+    movies.splice(newPosition, 0, {
         ...movie,
-        rank: newRank
+        rank: newPosition + 1
     });
+
+    // Update ranks for all movies
+    movies.forEach((movie, index) => {
+        movie.rank = index + 1;
+    });
+
     renderMovies();
 }
 
+async function handleRerank(index) {
+    const movieToRerank = movies[index];
+    
+    // Remove the movie temporarily from the array
+    movies.splice(index, 1);
+    
+    // Find the new position using binary search
+    const newPosition = await findRankWithBinarySearch(movieToRerank, index);
+    
+    // Insert the movie at the new position
+    movies.splice(newPosition, 0, movieToRerank);
+    
+    // Update all ranks
+    movies.forEach((movie, index) => {
+        movie.rank = index + 1;
+    });
+    
+    renderMovies();
+}
+
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
     renderMovies();
     
-    document.querySelector('.menu-toggle').addEventListener('click', () => {
+    document.querySelector('.menu-toggle')?.addEventListener('click', () => {
         document.querySelector('.nav-links').classList.toggle('active');
     });
 
