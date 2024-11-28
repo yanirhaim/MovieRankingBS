@@ -1,58 +1,79 @@
-const movies = [
-    {
-        rank: 1,
-        title: "Pobres criaturas",
-        year: 2023,
-        poster: "/api/placeholder/80/120",
-        tags: ["Drama", "Sci-Fi", "Romance"],
-        description: "A story of Bella Baxter, a young woman brought back to life by the brilliant and unorthodox scientist Dr. Godwin Baxter."
-    },
-    {
-        rank: 2,
-        title: "Spider-Man: Cruzando el Multiverso",
-        year: 2023,
-        poster: "/api/placeholder/80/120",
-        tags: ["Animation", "Action", "Adventure"],
-        description: "Miles Morales returns for an epic adventure that will transport Brooklyn's full-time, friendly neighborhood Spider-Man across the Multiverse."
-    },
-    {
-        rank: 3,
-        title: "La sociedad de la nieve",
-        year: 2023,
-        poster: "/api/placeholder/80/120",
-        tags: ["Drama", "Biography", "Survival"],
-        description: "A Uruguayan rugby team stranded in the Andes after their plane crashes must take extreme measures to survive."
-    },
-    {
-        rank: 4,
-        title: "Oppenheimer",
-        year: 2023,
-        poster: "/api/placeholder/80/120",
-        tags: ["Biography", "Drama", "History"],
-        description: "The story of J. Robert Oppenheimer's role in the development of the atomic bomb during World War II."
-    }
-];
+import config from './config.js';
 
+// Use configuration values instead of hard-coded strings
+const { key: API_KEY, baseUrl: BASE_URL, posterBaseUrl: POSTER_BASE_URL } = config.api;
+
+// Transform TMDB movie data to our format
+function transformMovieData(tmdbMovie) {
+    return {
+        title: tmdbMovie.title,
+        year: new Date(tmdbMovie.release_date).getFullYear(),
+        poster: tmdbMovie.poster_path ? `${POSTER_BASE_URL}${tmdbMovie.poster_path}` : '/api/placeholder/80/120',
+        tags: tmdbMovie.genres?.map(genre => genre.name) || [],
+        description: tmdbMovie.overview
+    };
+}
+
+// Initialize empty movies array
+let movies = [];
+
+// Fetch initial top rated movies
+async function fetchTopMovies() {
+    try {
+        const response = await fetch(
+            `${BASE_URL}/movie/top_rated?api_key=${API_KEY}&language=en-US&page=1`
+        );
+        const data = await response.json();
+        
+        // Get detailed information for each movie to include genres
+        const detailedMovies = await Promise.all(
+            data.results.slice(0, 10).map(async (movie) => {
+                const detailResponse = await fetch(
+                    `${BASE_URL}/movie/${movie.id}?api_key=${API_KEY}&language=en-US`
+                );
+                return detailResponse.json();
+            })
+        );
+        
+        // Transform and set initial rankings
+        movies = detailedMovies.map((movie, index) => ({
+            ...transformMovieData(movie),
+            rank: index + 1
+        }));
+            
+        renderMovies();
+    } catch (error) {
+        console.error('Error fetching top movies:', error);
+        showErrorToast('Failed to load movies. Please try again later.');
+    }
+}
+
+// Search movies from TMDB
 const searchMovies = async (query) => {
-    // Simulating API call - replace with actual API integration
-    return [
-        {
-            title: "Example Movie 1",
-            year: 2023,
-            poster: "/api/placeholder/80/120",
-            tags: ["Drama", "Action"],
-            description: "Example movie description 1"
-        },
-        {
-            title: "Example Movie 2",
-            year: 2022,
-            poster: "/api/placeholder/80/120",
-            tags: ["Comedy", "Romance"],
-            description: "Example movie description 2"
-        }
-    ].filter(movie => 
-        movie.title.toLowerCase().includes(query.toLowerCase())
-    );
+    if (query.length < 2) return [];
+    
+    try {
+        const response = await fetch(
+            `${BASE_URL}/search/movie?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1`
+        );
+        const data = await response.json();
+        
+        // Get detailed information for each movie to include genres
+        const detailedMovies = await Promise.all(
+            data.results.slice(0, 5).map(async (movie) => {
+                const detailResponse = await fetch(
+                    `${BASE_URL}/movie/${movie.id}?api_key=${API_KEY}&language=en-US`
+                );
+                return detailResponse.json();
+            })
+        );
+        
+        return detailedMovies.map(transformMovieData);
+    } catch (error) {
+        console.error('Error searching movies:', error);
+        showErrorToast('Failed to search movies. Please try again later.');
+        return [];
+    }
 };
 
 // Rendering Functions
@@ -302,9 +323,18 @@ async function handleRerank(index) {
     renderMovies();
 }
 
+// Error handling utility
+function showErrorToast(message) {
+    const errorToast = document.createElement('div');
+    errorToast.className = 'error-toast';
+    errorToast.textContent = message;
+    document.body.appendChild(errorToast);
+    setTimeout(() => errorToast.remove(), 3000);
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    renderMovies();
+    fetchTopMovies();
     
     document.querySelector('.menu-toggle')?.addEventListener('click', () => {
         document.querySelector('.nav-links').classList.toggle('active');

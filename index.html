@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movie Rankings 2023</title>
-    <link rel="stylesheet" href="styles.css">
+    <head>
+        <link rel="stylesheet" href="styles.css">
+    </head>
 </head>
 <body>
     <div class="container">
@@ -14,18 +16,13 @@
                 <button class="menu-toggle">☰</button>
             </div>
             <div class="nav-links">
-                <a href="#" class="nav-item">Dashboard</a>
-                <a href="#" class="nav-item">Your Movies</a>
                 <a href="#" class="nav-item active">Rankings</a>
-                <a href="#" class="nav-item">Community</a>
-                <a href="#" class="nav-item">Notifications</a>
-                <a href="#" class="nav-item">Settings</a>
             </div>
         </nav>
 
         <main class="main-content">
             <div class="header">
-                <h1>Movie ranking 2023</h1>
+                <h1>Movie Ranking App</h1>
                 <div class="filters">
                     <button class="filter-btn active">Top 10</button>
                     <button class="filter-btn">All</button>
@@ -35,6 +32,6 @@
             <div id="movie-list"></div>
         </main>
     </div>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
